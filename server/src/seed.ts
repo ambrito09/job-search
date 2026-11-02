@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import type { PrismaClient } from "@prisma/client";
+import { searchColumns } from "./search";
 
 export const DEMO_PASSWORD = "password123";
 export const DEMO_CANDIDATE_EMAIL = "candidato@demo.com";
@@ -40,7 +41,7 @@ export async function seedIfEmpty(prisma: PrismaClient): Promise<boolean> {
       await prisma.position.create({
         // La última queda cerrada para mostrar ese estado.
         data: {
-          title, description, location, mode,
+          title, description, location, mode, ...searchColumns({ title, description, location }),
           status: i === positions.length - 1 ? "CLOSED" : "OPEN",
           companyId: owners[i % owners.length].id,
         },

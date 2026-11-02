@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, expect, test } from "vitest";
 import { seedIfEmpty } from "./seed";
+import { backfillSearchColumns } from "./search";
 
 const dir = mkdtempSync(join(tmpdir(), "seed-"));
 const url = `file:${join(dir, "test.db").replaceAll("\\", "/")}`;
@@ -28,4 +29,13 @@ test("siembra una vez y no duplica al repetir", async () => {
   expect(await seedIfEmpty(prisma)).toBe(false);
   expect(await counts()).toEqual(first);
   expect(await prisma.position.count({ where: { status: "CLOSED" } })).toBe(1);
+});
+
+test("la siembra deja las columnas de búsqueda y el backfill arregla filas viejas", async () => {
+  expect(await prisma.position.count({ where: { searchLc: "" } })).toBe(0);
+  const p = await prisma.position.findFirstOrThrow();
+  await prisma.position.update({ where: { id: p.id }, data: { searchLc: "", locationLc: "" } });
+  expect(await backfillSearchColumns(prisma)).toBe(1);
+  expect(await backfillSearchColumns(prisma)).toBe(0);
+  expect((await prisma.position.findUniqueOrThrow({ where: { id: p.id } })).locationLc).toBe(p.location.toLowerCase());
 });

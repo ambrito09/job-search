@@ -40,6 +40,9 @@ model Position {
   description  String
   location     String
   mode         Mode
+  // Copias en minúsculas para filtrar en SQLite (su LIKE solo ignora mayúsculas ASCII); ver search.ts.
+  searchLc     String        @default("")
+  locationLc   String        @default("")
   status       Status        @default(OPEN)
   companyId    Int
   company      User          @relation(fields: [companyId], references: [id])

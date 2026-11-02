@@ -37,6 +37,8 @@ export const positionFiltersSchema = z.object({
   q: z.string().trim().max(100).optional(),
   location: z.string().trim().max(100).optional(),
   mode: z.enum(modes).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 export type Role = (typeof roles)[number];
