@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { IconBriefcase, IconCompass, IconFileText, IconLogin, IconLogout, IconPlus, IconUserPlus } from "@tabler/icons-react";
+import { IconBriefcase, IconCompass, IconFileText, IconLayoutList, IconLogin, IconLogout, IconPlus, IconUserPlus } from "@tabler/icons-react";
 import { Link, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -22,7 +22,10 @@ export function Layout() {
           {isPending ? null : user ? (
             <>
               {user.role === "COMPANY" ? (
-                <Link to="/company/positions/new" className="inline-flex items-center gap-1 text-sm hover:underline"><IconPlus className="size-4" aria-hidden />Nueva posición</Link>
+                <>
+                  <Link to="/company/positions" className="inline-flex items-center gap-1 text-sm hover:underline"><IconLayoutList className="size-4" aria-hidden />Mis posiciones</Link>
+                  <Link to="/company/positions/new" className="inline-flex items-center gap-1 text-sm hover:underline"><IconPlus className="size-4" aria-hidden />Nueva posición</Link>
+                </>
               ) : (
                 <Link to="/me/applications" className="inline-flex items-center gap-1 text-sm hover:underline"><IconFileText className="size-4" aria-hidden />Mis aplicaciones</Link>
               )}

@@ -80,19 +80,60 @@ test("nueva posición: un candidato ve 403 y no el formulario", async () => {
   expect(screen.queryByLabelText("Título")).toBeNull();
 });
 
-test("la empresa dueña cierra su posición desde el detalle", async () => {
+test("la empresa dueña cierra (con confirmación) y reabre su posición desde el detalle", async () => {
   let status = "OPEN";
   const fetchSpy = mockApi({
     "GET /api/me": { status: 200, body: acme },
     "GET /api/positions/7": () => ({ status: 200, body: pos(status) }),
-    "PATCH /api/positions/7": () => ((status = "CLOSED"), { status: 200, body: pos(status) }),
+    "PATCH /api/positions/7": () => ({ status: 200, body: pos(status) }),
   });
   renderAt("/positions/7");
   expect(await screen.findByRole("link", { name: "Ver aplicantes" })).toBeTruthy();
+  // Cancelar no llama a la API.
   await userEvent.click(screen.getByRole("button", { name: "Cerrar posición" }));
+  await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+  expect(fetchSpy().some((c) => c.startsWith("PATCH"))).toBe(false);
+  // Confirmar cierra.
+  status = "CLOSED";
+  await userEvent.click(screen.getByRole("button", { name: "Cerrar posición" }));
+  await userEvent.click(screen.getByRole("button", { name: "Sí, cerrar" }));
   expect(await screen.findByText("Posición cerrada")).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Cerrar posición" })).toBeNull();
-  expect(fetchSpy()).toContain("PATCH /api/positions/7");
+  // Reabrir.
+  status = "OPEN";
+  await userEvent.click(screen.getByRole("button", { name: "Reabrir posición" }));
+  expect(await screen.findByRole("button", { name: "Cerrar posición" })).toBeTruthy();
+  expect(screen.queryByText("Posición cerrada")).toBeNull();
+  expect(fetchSpy().filter((c) => c.startsWith("PATCH"))).toHaveLength(2);
+});
+
+test("mis posiciones: lista abiertas y cerradas con su número de aplicantes", async () => {
+  mockApi({
+    "GET /api/me": { status: 200, body: acme },
+    "GET /api/me/positions": {
+      status: 200,
+      body: [
+        { ...pos(), id: 7, _count: { applications: 2 } },
+        { ...pos("CLOSED"), id: 8, title: "Vieja", _count: { applications: 1 } },
+      ],
+    },
+  });
+  renderAt("/company/positions");
+  expect(await screen.findByText("Dev React")).toBeTruthy();
+  expect(screen.getByText("Vieja")).toBeTruthy();
+  expect(screen.getByText("Cerrada")).toBeTruthy();
+  expect(screen.getByRole("link", { name: "2 aplicantes" }).getAttribute("href")).toBe("/company/positions/7/applicants");
+  expect(screen.getByRole("link", { name: "1 aplicante" })).toBeTruthy();
+});
+
+test("mis posiciones: vacío y acceso denegado a candidatos", async () => {
+  mockApi({ "GET /api/me": { status: 200, body: acme }, "GET /api/me/positions": { status: 200, body: [] } });
+  renderAt("/company/positions");
+  expect(await screen.findByText("Aún no has publicado posiciones.")).toBeTruthy();
+  cleanup();
+  mockApi({ "GET /api/me": { status: 200, body: ana } });
+  renderAt("/company/positions");
+  expect((await screen.findByRole("alert")).textContent).toMatch(/403/);
 });
 
 test("candidatos, otras empresas y visitantes no ven acciones de dueña", async () => {

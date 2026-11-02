@@ -1,5 +1,6 @@
-import { IconAlertCircle, IconArrowLeft, IconCircleX, IconLock, IconUsers } from "@tabler/icons-react";
+import { IconAlertCircle, IconArrowLeft, IconCircleX, IconLock, IconLockOpen, IconUsers } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { PositionMeta } from "@/components/PositionMeta";
 import { Button } from "@/components/ui/button";
@@ -18,11 +19,14 @@ export function PositionDetailPage() {
     queryFn: () => api<Position>(`/positions/${id}`),
     retry: false,
   });
-  const close = useMutation({
-    mutationFn: () => api<Position>(`/positions/${id}`, { method: "PATCH", json: { status: "CLOSED" } }),
+  const [confirming, setConfirming] = useState(false);
+  const setStatus = useMutation({
+    mutationFn: (status: Position["status"]) => api<Position>(`/positions/${id}`, { method: "PATCH", json: { status } }),
     onSuccess: (updated) => {
+      setConfirming(false);
       qc.setQueryData(["position", id], updated);
       qc.invalidateQueries({ queryKey: ["positions"] });
+      qc.invalidateQueries({ queryKey: ["myPositions"] });
     },
   });
   const isOwner = me?.role === "COMPANY" && me.id === p?.company.id;
@@ -43,12 +47,20 @@ export function PositionDetailPage() {
           {isOwner && (
             <div className="flex flex-wrap gap-2 pt-2">
               <Button asChild><Link to={`/company/positions/${p.id}/applicants`}><IconUsers className="size-4" aria-hidden />Ver aplicantes</Link></Button>
-              {p.status === "OPEN" && (
-                <Button variant="outline" onClick={() => close.mutate()} disabled={close.isPending}><IconCircleX className="size-4" aria-hidden />Cerrar posición</Button>
+              {p.status === "CLOSED" ? (
+                <Button variant="outline" onClick={() => setStatus.mutate("OPEN")} disabled={setStatus.isPending}><IconLockOpen className="size-4" aria-hidden />Reabrir posición</Button>
+              ) : confirming ? (
+                <div role="group" aria-label="Confirmar cierre" className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm">¿Cerrar esta posición? Dejará de aparecer en la lista pública.</span>
+                  <Button variant="destructive" size="sm" onClick={() => setStatus.mutate("CLOSED")} disabled={setStatus.isPending}>Sí, cerrar</Button>
+                  <Button variant="outline" size="sm" onClick={() => setConfirming(false)}>Cancelar</Button>
+                </div>
+              ) : (
+                <Button variant="outline" onClick={() => setConfirming(true)}><IconCircleX className="size-4" aria-hidden />Cerrar posición</Button>
               )}
             </div>
           )}
-          {close.error && <p role="alert" className="text-sm text-destructive">{close.error.message}</p>}
+          {setStatus.error && <p role="alert" className="text-sm text-destructive">{setStatus.error.message}</p>}
         </article>
       )}
     </div>

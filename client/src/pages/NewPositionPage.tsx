@@ -20,6 +20,7 @@ export function NewPositionPage() {
     mutationFn: (v: PositionCreateInput) => api<Position>("/positions", { method: "POST", json: v }),
     onSuccess: (p) => {
       qc.invalidateQueries({ queryKey: ["positions"] });
+      qc.invalidateQueries({ queryKey: ["myPositions"] });
       navigate(`/company/positions/${p.id}/applicants`);
     },
   });

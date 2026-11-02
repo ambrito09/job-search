@@ -44,6 +44,19 @@ export function positionsRouter(prisma: PrismaClient, secret: string) {
     position ? res.json(position) : void res.status(404).json({ error: "No encontrado" });
   });
 
+  // Todas las posiciones de la empresa (abiertas y cerradas) con su número de aplicantes.
+  r.get("/me/positions", auth, company, async (req, res) => {
+    res.json(
+      await prisma.position.findMany({
+        where: { companyId: req.user!.id },
+        include: { ...include, _count: { select: { applications: true } } },
+        omit,
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 100, // shortcut: sin paginación, tope fijo; paginar si una empresa publica cientos.
+      }),
+    );
+  });
+
   r.post("/positions", auth, company, validate(positionCreateSchema), async (req, res) => {
     res.status(201).json(await prisma.position.create({ data: { ...req.body, ...searchColumns(req.body), companyId: req.user!.id }, include, omit }));
   });

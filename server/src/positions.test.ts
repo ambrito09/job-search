@@ -127,3 +127,18 @@ test("las columnas internas de búsqueda no salen en la API", async () => {
     expect(Object.keys(p)).not.toContain("locationLc");
   }
 });
+
+test("mis posiciones: solo la empresa, solo las suyas (abiertas y cerradas) con su número de aplicantes", async () => {
+  expect((await request(app).get("/api/me/positions")).status).toBe(401);
+  expect((await (await login("candidato@demo.com")).get("/api/me/positions")).status).toBe(403);
+  const emp = await login("empresa3@demo.com");
+  const { body: p } = await emp.post("/api/positions").send(newPos);
+  await emp.patch(`/api/positions/${p.id}`).send({ status: "CLOSED" }).expect(200);
+  const res = await emp.get("/api/me/positions");
+  expect(res.status).toBe(200);
+  expect(res.body.every((x: any) => x.company.name === "Datos del Sur")).toBe(true);
+  const mine = res.body.find((x: any) => x.id === p.id);
+  expect(mine).toMatchObject({ status: "CLOSED", _count: { applications: 0 } });
+  expect(Object.keys(mine)).not.toContain("searchLc");
+  expect(res.body.some((x: any) => x.status === "OPEN")).toBe(true); // las cerradas no desplazan a las abiertas
+});
