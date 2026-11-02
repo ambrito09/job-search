@@ -2,6 +2,7 @@ import { IconAlertCircle, IconArrowLeft, IconCircleX, IconLock, IconLockOpen, Ic
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { ApplyBox } from "@/components/ApplyBox";
 import { PositionMeta } from "@/components/PositionMeta";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -44,6 +45,7 @@ export function PositionDetailPage() {
           <PositionMeta p={p} />
           {p.status === "CLOSED" && <p className="inline-flex items-center gap-1 rounded bg-muted px-2 py-1 text-sm font-medium"><IconLock className="size-4" aria-hidden />Posición cerrada</p>}
           <p className="whitespace-pre-line">{p.description}</p>
+          <ApplyBox position={p} />
           {isOwner && (
             <div className="flex flex-wrap gap-2 pt-2">
               <Button asChild><Link to={`/company/positions/${p.id}/applicants`}><IconUsers className="size-4" aria-hidden />Ver aplicantes</Link></Button>

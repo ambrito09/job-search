@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider, type RouteObject } from "react-rou
 import { Layout } from "@/components/Layout";
 import { RequireAuth } from "@/components/RequireAuth";
 import { ApplicantsPage } from "@/pages/ApplicantsPage";
+import { MyApplicationsPage } from "@/pages/MyApplicationsPage";
 import { MyPositionsPage } from "@/pages/MyPositionsPage";
 import { NewPositionPage } from "@/pages/NewPositionPage";
 import { LandingPage } from "@/pages/LandingPage";
@@ -19,6 +20,7 @@ export const routes: RouteObject[] = [
       { path: "/", element: <LandingPage /> },
       { path: "/positions", element: <PositionsPage /> },
       { path: "/positions/:id", element: <PositionDetailPage /> },
+      { path: "/me/applications", element: <RequireAuth role="CANDIDATE"><MyApplicationsPage /></RequireAuth> },
       { path: "/company/positions", element: <RequireAuth role="COMPANY"><MyPositionsPage /></RequireAuth> },
       { path: "/company/positions/new", element: <RequireAuth role="COMPANY"><NewPositionPage /></RequireAuth> },
       { path: "/company/positions/:id/applicants", element: <RequireAuth role="COMPANY"><ApplicantsPage /></RequireAuth> },

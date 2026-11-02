@@ -11,6 +11,14 @@ export type Position = {
   company: { id: number; name: string };
 };
 
+export type MyApplication = {
+  id: number;
+  positionId: number;
+  message: string | null;
+  createdAt: string;
+  position: Position;
+};
+
 export type MyPosition = Position & { _count: { applications: number } };
 
 export type Applicant = {
