@@ -6,6 +6,7 @@ import { searchColumns } from "./search";
 import { validate } from "./validate";
 
 const include = { company: { select: { id: true, name: true } } };
+const omit = { searchLc: true, locationLc: true }; // columnas internas de búsqueda
 
 export function positionsRouter(prisma: PrismaClient, secret: string) {
   const r = Router();
@@ -28,7 +29,7 @@ export function positionsRouter(prisma: PrismaClient, secret: string) {
     // LIMIT/OFFSET en SQLite: solo se leen las filas de la página.
     const [items, total] = await Promise.all([
       prisma.position.findMany({
-        where, include,
+        where, include, omit,
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: limit,
         skip: offset,
@@ -39,12 +40,12 @@ export function positionsRouter(prisma: PrismaClient, secret: string) {
   });
 
   r.get("/positions/:id", async (req, res) => {
-    const position = await prisma.position.findUnique({ where: { id: Number(req.params.id) || 0 }, include });
+    const position = await prisma.position.findUnique({ where: { id: Number(req.params.id) || 0 }, include, omit });
     position ? res.json(position) : void res.status(404).json({ error: "No encontrado" });
   });
 
   r.post("/positions", auth, company, validate(positionCreateSchema), async (req, res) => {
-    res.status(201).json(await prisma.position.create({ data: { ...req.body, ...searchColumns(req.body), companyId: req.user!.id }, include }));
+    res.status(201).json(await prisma.position.create({ data: { ...req.body, ...searchColumns(req.body), companyId: req.user!.id }, include, omit }));
   });
 
   r.patch("/positions/:id", auth, company, validate(positionUpdateSchema), async (req, res) => {
@@ -58,7 +59,7 @@ export function positionsRouter(prisma: PrismaClient, secret: string) {
       res.status(403).json({ error: "Prohibido" });
       return;
     }
-    res.json(await prisma.position.update({ where: { id }, data: { ...req.body, ...searchColumns({ ...existing, ...req.body }) }, include }));
+    res.json(await prisma.position.update({ where: { id }, data: { ...req.body, ...searchColumns({ ...existing, ...req.body }) }, include, omit }));
   });
 
   return r;

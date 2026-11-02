@@ -80,3 +80,9 @@ test("mis aplicaciones: 401 sin sesión, 403 empresa, el candidato ve las suyas 
   await nuevo.post("/api/auth/register").send({ email: "n@x.com", password: "password123", role: "CANDIDATE", name: "N" }).expect(201);
   expect((await nuevo.get("/api/me/applications")).body).toEqual([]); // no ve las de otros
 });
+
+test("las aplicaciones no exponen las columnas internas de la posición", async () => {
+  const cand = await login("candidato@demo.com");
+  const [a] = (await cand.get("/api/me/applications")).body;
+  expect(Object.keys(a.position)).not.toContain("searchLc");
+});

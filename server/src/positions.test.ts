@@ -115,3 +115,15 @@ test("al editar título o ubicación el filtro usa los valores nuevos", async ()
   expect(await find("q=zzcreada")).toEqual([]);
   expect(await find("q=ZZRENOMBRADA&location=ñandú")).toEqual([p.id]);
 });
+
+test("las columnas internas de búsqueda no salen en la API", async () => {
+  const emp = await login("empresa1@demo.com");
+  const created = (await emp.post("/api/positions").send(newPos)).body;
+  const list = (await request(app).get("/api/positions")).body.items[0];
+  const detail = (await request(app).get(`/api/positions/${created.id}`)).body;
+  const patched = (await emp.patch(`/api/positions/${created.id}`).send({ title: "Otra" })).body;
+  for (const p of [created, list, detail, patched]) {
+    expect(Object.keys(p)).not.toContain("searchLc");
+    expect(Object.keys(p)).not.toContain("locationLc");
+  }
+});

@@ -56,7 +56,7 @@ export function applicationsRouter(prisma: PrismaClient, secret: string) {
     res.json(
       await prisma.application.findMany({
         where: { candidateId: req.user!.id },
-        include: { position: { include: { company: { select: { id: true, name: true } } } } },
+        include: { position: { omit: { searchLc: true, locationLc: true }, include: { company: { select: { id: true, name: true } } } } },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       }),
     );
