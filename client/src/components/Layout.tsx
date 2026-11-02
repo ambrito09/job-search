@@ -64,6 +64,10 @@ export function Layout() {
           <IconCompass className="size-5 text-accent" aria-hidden />
           <span className="font-display font-semibold">Brújula</span>
           <span className="text-primary-soft/70">Bolsa de empleo de portafolio: las empresas publican y los candidatos aplican.</span>
+          {/* Atribución exigida por la licencia gratuita de Icons8 para el favicon */}
+          <a href="https://icons8.com/icon/compass" target="_blank" rel="noopener noreferrer" className="ml-auto text-primary-soft/70 underline underline-offset-4 hover:text-white">
+            Icono por Icons8
+          </a>
         </div>
       </footer>
     </div>

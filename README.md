@@ -121,3 +121,15 @@ Todas las rutas cuelgan de `/api`; los errores son `{ "error": "mensaje" }`.
 - El rate limit (20 intentos de registro/login por IP cada 15 min) es en memoria y por proceso.
 - Pensado para una sola instancia: SQLite y el contador de rate limit no se comparten entre réplicas.
 - `GET /me/positions` devuelve como máximo las 20 posiciones más recientes de la empresa.
+- La búsqueda por texto usa un índice FTS5 (trigram) y encuentra subcadenas; los términos de 1 o 2 caracteres no entran en el índice y se buscan recorriendo las posiciones abiertas.
+
+## Migraciones de base de datos
+
+Las migraciones están en `server/prisma/migrations` y se aplican solas al arrancar. Para crear una nueva tras cambiar `schema.prisma`: `cd server && npx prisma migrate dev --name <nombre>`.
+
+La búsqueda de texto vive en una tabla virtual (`PositionSearch`) creada con SQL a mano. Prisma no la modela, así que `server/prisma.config.ts` la declara como tabla externa; sin eso, `migrate dev` propondría borrarla.
+
+## Créditos
+
+- Favicon: [Compass](https://icons8.com/icon/compass) por [Icons8](https://icons8.com), con su licencia gratuita (requiere este enlace de atribución).
+- Iconos de la interfaz: [Tabler Icons](https://tabler.io/icons) (MIT).
