@@ -6,14 +6,16 @@ const control =
 
 // Etiqueta + control (input o select) + mensaje de error asociado para lectores de pantalla.
 export function FormField({
-  label, error, children, ...props
-}: { label: string; error?: string; children?: ReactNode } & ComponentProps<"input">) {
+  label, error, children, multiline, ...props
+}: { label: string; error?: string; children?: ReactNode; multiline?: boolean } & ComponentProps<"input">) {
   const id = useId();
   const common = { id, "aria-invalid": !!error, "aria-describedby": error ? `${id}-error` : undefined };
   return (
     <div className="space-y-1">
       <label htmlFor={id} className="text-sm font-medium">{label}</label>
-      {children ? (
+      {multiline ? (
+        <textarea {...common} rows={6} className={cn(control, "h-auto py-2")} {...(props as ComponentProps<"textarea">)} />
+      ) : children ? (
         <select {...common} className={control} {...(props as ComponentProps<"select">)}>{children}</select>
       ) : (
         <input {...common} {...props} className={cn(control, props.className)} />

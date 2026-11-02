@@ -11,6 +11,13 @@ export type Position = {
   company: { id: number; name: string };
 };
 
+export type Applicant = {
+  id: number;
+  message: string | null;
+  createdAt: string;
+  candidate: { id: number; name: string; email: string };
+};
+
 export type PositionPage = { items: Position[]; total: number; limit: number; offset: number };
 
 export const modeLabels: Record<Mode, string> = { ONSITE: "Presencial", HYBRID: "Híbrido", REMOTE: "Remoto" };

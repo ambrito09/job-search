@@ -1,19 +1,31 @@
-import { useQuery } from "@tanstack/react-query";
-import { IconAlertCircle, IconArrowLeft, IconLock } from "@tabler/icons-react";
+import { IconAlertCircle, IconArrowLeft, IconCircleX, IconLock, IconUsers } from "@tabler/icons-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { api } from "@/lib/api";
 import { PositionMeta } from "@/components/PositionMeta";
+import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { useMe } from "@/lib/session";
 import type { Position } from "@/lib/types";
 
 export function PositionDetailPage() {
   const { id } = useParams();
   // La lista envía su URL (con filtros y página) en el estado; sin ella (enlace directo) se vuelve a la lista sin filtros.
   const list = (useLocation().state as { list?: string } | null)?.list ?? "/positions";
+  const qc = useQueryClient();
+  const { data: me } = useMe();
   const { data: p, error, isPending } = useQuery({
     queryKey: ["position", id],
     queryFn: () => api<Position>(`/positions/${id}`),
     retry: false,
   });
+  const close = useMutation({
+    mutationFn: () => api<Position>(`/positions/${id}`, { method: "PATCH", json: { status: "CLOSED" } }),
+    onSuccess: (updated) => {
+      qc.setQueryData(["position", id], updated);
+      qc.invalidateQueries({ queryKey: ["positions"] });
+    },
+  });
+  const isOwner = me?.role === "COMPANY" && me.id === p?.company.id;
 
   return (
     <div className="space-y-4">
@@ -28,6 +40,15 @@ export function PositionDetailPage() {
           <PositionMeta p={p} />
           {p.status === "CLOSED" && <p className="inline-flex items-center gap-1 rounded bg-muted px-2 py-1 text-sm font-medium"><IconLock className="size-4" aria-hidden />Posición cerrada</p>}
           <p className="whitespace-pre-line">{p.description}</p>
+          {isOwner && (
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Button asChild><Link to={`/company/positions/${p.id}/applicants`}><IconUsers className="size-4" aria-hidden />Ver aplicantes</Link></Button>
+              {p.status === "OPEN" && (
+                <Button variant="outline" onClick={() => close.mutate()} disabled={close.isPending}><IconCircleX className="size-4" aria-hidden />Cerrar posición</Button>
+              )}
+            </div>
+          )}
+          {close.error && <p role="alert" className="text-sm text-destructive">{close.error.message}</p>}
         </article>
       )}
     </div>
