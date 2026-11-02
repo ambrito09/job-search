@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { ApplyBox } from "@/components/ApplyBox";
+import { Monogram } from "@/components/Monogram";
 import { PositionMeta } from "@/components/PositionMeta";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -40,11 +41,16 @@ export function PositionDetailPage() {
       ) : error ? (
         <p role="alert" className="inline-flex items-center gap-2 text-destructive"><IconAlertCircle className="size-5" aria-hidden />{error.message}</p>
       ) : (
-        <article className="space-y-3">
-          <h1 className="text-2xl font-bold">{p.title}</h1>
-          <PositionMeta p={p} />
-          {p.status === "CLOSED" && <p className="inline-flex items-center gap-1 rounded bg-muted px-2 py-1 text-sm font-medium"><IconLock className="size-4" aria-hidden />Posición cerrada</p>}
-          <p className="whitespace-pre-line">{p.description}</p>
+        <article className="space-y-5 rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-8">
+          <header className="flex items-start gap-4">
+            <Monogram name={p.company.name} id={p.company.id} className="size-14 text-xl" />
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold leading-tight text-primary">{p.title}</h1>
+              <PositionMeta p={p} withCompany />
+            </div>
+          </header>
+          {p.status === "CLOSED" && <p className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm font-semibold"><IconLock className="size-4" aria-hidden />Posición cerrada</p>}
+          <p className="max-w-prose whitespace-pre-line leading-relaxed">{p.description}</p>
           <ApplyBox position={p} />
           {isOwner && (
             <div className="flex flex-wrap gap-2 pt-2">

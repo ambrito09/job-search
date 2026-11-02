@@ -2,7 +2,7 @@ import { useId, type ComponentProps, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const control =
-  "h-9 w-full rounded-md border border-border bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive";
+  "h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-invalid:border-destructive";
 
 // Etiqueta + control (input o select) + mensaje de error asociado para lectores de pantalla.
 export function FormField({
@@ -12,7 +12,7 @@ export function FormField({
   const common = { id, "aria-invalid": !!error, "aria-describedby": error ? `${id}-error` : undefined };
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="text-sm font-medium">{label}</label>
+      <label htmlFor={id} className="text-sm font-semibold">{label}</label>
       {multiline ? (
         <textarea {...common} rows={6} className={cn(control, "h-auto py-2")} {...(props as ComponentProps<"textarea">)} />
       ) : children ? (

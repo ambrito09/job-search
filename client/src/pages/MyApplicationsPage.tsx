@@ -14,7 +14,7 @@ export function MyApplicationsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Mis aplicaciones</h1>
+      <h1 className="text-3xl font-bold text-primary">Mis aplicaciones</h1>
       {isPending ? (
         <p role="status">Cargando tus aplicaciones…</p>
       ) : error ? (
@@ -33,7 +33,7 @@ export function MyApplicationsPage() {
                   <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-xs font-normal"><IconLock className="size-3" aria-hidden />Cerrada</span>
                 )}
               </Link>
-              <PositionMeta p={a.position} />
+              <PositionMeta p={a.position} withCompany />
               {a.message && <p className="whitespace-pre-line text-sm">{a.message}</p>}
               <p className="text-xs text-muted-foreground">Aplicaste el {new Date(a.createdAt).toLocaleDateString("es")}</p>
             </li>

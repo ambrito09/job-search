@@ -18,7 +18,7 @@ export function ApplicantsPage() {
       <Link to={`/positions/${id}`} className="inline-flex items-center gap-1 text-sm underline">
         <IconArrowLeft className="size-4" aria-hidden />Volver a la posición
       </Link>
-      <h1 className="text-2xl font-bold">Aplicantes{position.data && `: ${position.data.title}`}</h1>
+      <h1 className="text-3xl font-bold text-primary">Aplicantes{position.data && `: ${position.data.title}`}</h1>
       {isPending ? (
         <p role="status">Cargando aplicantes…</p>
       ) : error ? (

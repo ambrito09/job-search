@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { IconAlertCircle, IconChevronLeft, IconChevronRight, IconFilter, IconMoodEmpty, IconRefresh } from "@tabler/icons-react";
 import type { FormEvent } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { modes } from "@app/shared";
 import { FormField } from "@/components/FormField";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { PositionMeta } from "@/components/PositionMeta";
+import { PositionRow } from "@/components/PositionRow";
 import { modeLabels, type PositionPage } from "@/lib/types";
 
 // Todo el estado de la lista (q, location, mode, limit, offset) vive en la URL: copiarla reproduce la vista.
@@ -34,9 +34,9 @@ export function PositionsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Posiciones abiertas</h1>
+      <h1 className="text-3xl font-bold text-primary">Posiciones abiertas</h1>
       {/* key: al cambiar la URL (atrás/adelante) el formulario se rehace con sus valores */}
-      <form key={search} onSubmit={onSubmit} role="search" className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end">
+      <form key={search} onSubmit={onSubmit} role="search" className="grid gap-3 rounded-2xl border border-border bg-surface p-4 shadow-sm sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end">
         <FormField label="Buscar" name="q" defaultValue={params.get("q") ?? ""} placeholder="Título o descripción" />
         <FormField label="Ubicación" name="location" defaultValue={params.get("location") ?? ""} />
         <FormField label="Modalidad" name="mode" defaultValue={params.get("mode") ?? ""}>
@@ -57,14 +57,9 @@ export function PositionsPage() {
         <p className="inline-flex items-center gap-2 text-muted-foreground"><IconMoodEmpty className="size-5" aria-hidden />No hay posiciones que coincidan con los filtros.</p>
       ) : (
         <>
-          <ul className="divide-y divide-border rounded-md border border-border">
+          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
             {data.items.map((p) => (
-              <li key={p.id}>
-                <Link to={`/positions/${p.id}`} state={{ list: `/positions${search && `?${search}`}` }} className="block space-y-1 px-4 py-3 hover:bg-muted">
-                  <span className="font-medium">{p.title}</span>
-                  <PositionMeta p={p} />
-                </Link>
-              </li>
+              <li key={p.id}><PositionRow p={p} list={`/positions${search && `?${search}`}`} /></li>
             ))}
           </ul>
           <nav aria-label="Paginación" className="flex items-center gap-3">

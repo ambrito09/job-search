@@ -27,7 +27,7 @@ export function NewPositionPage() {
 
   return (
     <form onSubmit={handleSubmit((v) => create.mutate(v))} noValidate className="mx-auto max-w-xl space-y-4">
-      <h1 className="text-2xl font-bold">Nueva posición</h1>
+      <h1 className="text-3xl font-bold text-primary">Nueva posición</h1>
       <FormField label="Título" error={errors.title?.message} {...register("title")} />
       <FormField label="Descripción" multiline error={errors.description?.message} {...register("description")} />
       <FormField label="Ubicación" error={errors.location?.message} {...register("location")} />

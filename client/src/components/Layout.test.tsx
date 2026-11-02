@@ -11,7 +11,15 @@ afterEach(() => {
 });
 
 function renderApp(me: { status: number; body: unknown }) {
-  vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(me.body), { status: me.status })));
+  // Solo /api/me devuelve la sesión; el resto (p. ej. posiciones recientes de la landing) responde 404.
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string) =>
+      url === "/api/me"
+        ? new Response(JSON.stringify(me.body), { status: me.status })
+        : new Response(JSON.stringify({ error: "No encontrado" }), { status: 404 }),
+    ),
+  );
   render(
     <QueryClientProvider client={new QueryClient()}>
       <RouterProvider router={createMemoryRouter(routes)} />

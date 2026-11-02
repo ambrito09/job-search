@@ -4,6 +4,7 @@ import { IconUserPlus } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { registerSchema, type RegisterInput } from "@app/shared";
+import { AuthShell } from "@/components/AuthShell";
 import { FormField } from "@/components/FormField";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -27,8 +28,9 @@ export function RegisterPage() {
 
   if (me) return <Navigate to="/" replace />;
   return (
-    <form onSubmit={handleSubmit((v) => signUp.mutate(v))} noValidate className="mx-auto max-w-sm space-y-4">
-      <h1 className="text-2xl font-bold">Crear cuenta</h1>
+    <AuthShell>
+    <form onSubmit={handleSubmit((v) => signUp.mutate(v))} noValidate className="space-y-4">
+      <h1 className="text-3xl font-bold text-primary">Crear cuenta</h1>
       <FormField label="Soy" error={errors.role?.message} {...register("role")}>
         <option value="CANDIDATE">Candidato/a</option>
         <option value="COMPANY">Empresa</option>
@@ -42,5 +44,6 @@ export function RegisterPage() {
         ¿Ya tienes cuenta? <Link to="/login" className="underline">Inicia sesión</Link>
       </p>
     </form>
+    </AuthShell>
   );
 }

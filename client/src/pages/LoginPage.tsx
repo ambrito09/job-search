@@ -4,6 +4,7 @@ import { IconLogin } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { loginSchema, type LoginInput } from "@app/shared";
+import { AuthShell } from "@/components/AuthShell";
 import { FormField } from "@/components/FormField";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -25,8 +26,9 @@ export function LoginPage() {
 
   if (me) return <Navigate to="/" replace />;
   return (
-    <form onSubmit={handleSubmit((v) => login.mutate(v))} noValidate className="mx-auto max-w-sm space-y-4">
-      <h1 className="text-2xl font-bold">Iniciar sesión</h1>
+    <AuthShell>
+    <form onSubmit={handleSubmit((v) => login.mutate(v))} noValidate className="space-y-4">
+      <h1 className="text-3xl font-bold text-primary">Iniciar sesión</h1>
       <FormField label="Correo" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
       <FormField label="Contraseña" type="password" autoComplete="current-password" error={errors.password?.message} {...register("password")} />
       {login.error && <p role="alert" className="text-sm text-destructive">{login.error.message}</p>}
@@ -35,5 +37,6 @@ export function LoginPage() {
         ¿No tienes cuenta? <Link to="/register" className="underline">Regístrate</Link>
       </p>
     </form>
+    </AuthShell>
   );
 }
