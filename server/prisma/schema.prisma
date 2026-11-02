@@ -49,8 +49,8 @@ model Position {
   createdAt    DateTime      @default(now())
   applications Application[]
 
-  @@index([status])
-  @@index([companyId])
+  @@index([status, createdAt, id]) // lista pública: filtra por estado y ordena por fecha sin ordenar aparte
+  @@index([companyId, createdAt, id]) // "mis posiciones" de una empresa, ordenadas sin ordenar aparte
 }
 
 model Application {

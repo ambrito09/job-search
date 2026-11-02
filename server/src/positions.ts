@@ -2,6 +2,7 @@ import { Router } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { positionCreateSchema, positionFiltersSchema, positionUpdateSchema } from "@app/shared";
 import { requireAuth, requireRole } from "./auth";
+import { searchPositionIds } from "./position-search";
 import { searchColumns } from "./search";
 import { validate } from "./validate";
 
@@ -20,21 +21,19 @@ export function positionsRouter(prisma: PrismaClient, secret: string) {
       return;
     }
     const { q, location, mode, limit, offset } = f.data;
-    const where = {
-      status: "OPEN" as const,
-      ...(mode && { mode }),
-      ...(location && { locationLc: { contains: location.toLowerCase() } }),
-      ...(q && { searchLc: { contains: q.toLowerCase() } }),
-    };
-    // LIMIT/OFFSET en SQLite: solo se leen las filas de la página.
+    const listOmit = { ...omit, description: true }; // la lista no la muestra: ahorra hasta 5.000 caracteres por fila
+    if (q || location) {
+      // Con texto: el índice FTS elige los ids de la página y después se leen solo esas filas.
+      const { ids, total } = await searchPositionIds(prisma, { q, location, mode, limit, offset });
+      const rows = await prisma.position.findMany({ where: { id: { in: ids } }, include, omit: listOmit });
+      const byId = new Map(rows.map((p) => [p.id, p]));
+      res.json({ items: ids.flatMap((id) => byId.get(id) ?? []), total, limit, offset });
+      return;
+    }
+    // Sin texto: LIMIT/OFFSET directo sobre el índice (status, createdAt, id).
+    const where = { status: "OPEN" as const, ...(mode && { mode }) };
     const [items, total] = await Promise.all([
-      prisma.position.findMany({
-        where, include,
-        omit: { ...omit, description: true }, // la lista no la muestra: ahorra hasta 5.000 caracteres por fila
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: limit,
-        skip: offset,
-      }),
+      prisma.position.findMany({ where, include, omit: listOmit, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: limit, skip: offset }),
       prisma.position.count({ where }),
     ]);
     res.json({ items, total, limit, offset });

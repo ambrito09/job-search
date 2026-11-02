@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import request from "supertest";
-import { afterAll, beforeAll, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { createApp } from "./app";
 import { seedIfEmpty } from "./seed";
 
@@ -158,4 +158,92 @@ test("la lista no incluye la descripción pero el detalle sí", async () => {
   expect(list.title).toBeTruthy();
   const detail = (await request(app).get(`/api/positions/${list.id}`)).body;
   expect(detail.description).toBeTruthy();
+});
+
+test("la consulta de la lista usa el índice (status, createdAt, id) y no ordena aparte", async () => {
+  const plan = await prisma.$queryRawUnsafe<{ detail: string }[]>(
+    "EXPLAIN QUERY PLAN SELECT id FROM Position WHERE status = 'OPEN' ORDER BY createdAt DESC, id DESC LIMIT 10 OFFSET 0",
+  );
+  const text = plan.map((r) => r.detail).join("\n");
+  expect(text).toContain("Position_status_createdAt_id_idx");
+  expect(text).not.toContain("TEMP B-TREE");
+});
+
+test("mis posiciones usa el índice (companyId, createdAt, id) sin ordenar aparte", async () => {
+  const plan = await prisma.$queryRawUnsafe<{ detail: string }[]>(
+    "EXPLAIN QUERY PLAN SELECT id FROM Position WHERE companyId = 1 ORDER BY createdAt DESC, id DESC LIMIT 20",
+  );
+  const text = plan.map((r) => r.detail).join("\n");
+  expect(text).toContain("Position_companyId_createdAt_id_idx");
+  expect(text).not.toContain("TEMP B-TREE");
+});
+
+describe("búsqueda de texto (índice FTS5)", () => {
+  const find = async (qs: string) => (await request(app).get(`/api/positions?${qs}`)).body;
+  const titles = async (qs: string) => (await find(qs)).items.map((p: any) => p.title);
+
+  test("encuentra subcadenas (como contains) sin distinguir mayúsculas", async () => {
+    expect(await titles("q=SCRIPT")).toEqual(["Desarrollador/a Frontend"]); // "TypeScript" (la de Full-stack está cerrada)
+    expect(await titles("q=prototipos%20para")).toEqual(["Diseñador/a UX"]); // frase con espacios
+  });
+
+  test("combina q, location y mode", async () => {
+    expect(await titles("q=react&location=bogot")).toEqual(["Desarrollador/a Frontend"]);
+    expect(await titles("q=react&location=lima")).toEqual([]);
+    expect(await titles("q=node&mode=REMOTE")).toEqual(["Ingeniero/a Backend"]);
+    expect(await titles("q=node&mode=ONSITE")).toEqual([]);
+  });
+
+  test("términos de 1 o 2 caracteres (fuera del índice) también funcionan", async () => {
+    expect(await titles("q=ux")).toEqual(["Diseñador/a UX"]);
+    expect(await titles("location=li")).toEqual(["QA Automation"]); // Lima
+  });
+
+  test("los caracteres especiales son texto literal, no sintaxis", async () => {
+    for (const q of ['"', "%", "_", "*", "react AND", "NEAR(", 'a"b', "'; DROP TABLE Position;--", "colon:term"]) {
+      const res = await request(app).get(`/api/positions?q=${encodeURIComponent(q)}`);
+      expect(res.status, q).toBe(200);
+      expect(res.body.items, q).toEqual([]);
+    }
+    expect((await request(app).get("/api/positions?limit=1")).body.total).toBeGreaterThan(0); // la tabla sigue intacta
+  });
+
+  test("paginación y total con texto", async () => {
+    const emp = await login("empresa1@demo.com");
+    for (let i = 1; i <= 3; i++) await emp.post("/api/positions").send({ ...newPos, title: `Pagfts ${i}` }).expect(201);
+    const p1 = await find("q=pagfts&limit=2&offset=0");
+    const p2 = await find("q=pagfts&limit=2&offset=2");
+    expect([p1.total, p2.total]).toEqual([3, 3]);
+    expect(p1.items.map((p: any) => p.title)).toEqual(["Pagfts 3", "Pagfts 2"]); // más reciente primero
+    expect(p2.items.map((p: any) => p.title)).toEqual(["Pagfts 1"]);
+    expect(Object.keys(p1.items[0])).not.toContain("description");
+  });
+
+  test("el índice sigue a los cambios: crear, editar, cerrar y borrar", async () => {
+    const emp = await login("empresa2@demo.com");
+    const { body: p } = await emp.post("/api/positions").send({ ...newPos, title: "Ftsviejo" });
+    expect(await titles("q=ftsviejo")).toEqual(["Ftsviejo"]); // trigger de alta
+    await emp.patch(`/api/positions/${p.id}`).send({ title: "Ftsnuevo" }).expect(200);
+    expect(await titles("q=ftsviejo")).toEqual([]); // trigger de edición: ya no aparece con el texto viejo
+    expect(await titles("q=ftsnuevo")).toEqual(["Ftsnuevo"]);
+    await emp.patch(`/api/positions/${p.id}`).send({ status: "CLOSED" }).expect(200);
+    expect(await titles("q=ftsnuevo")).toEqual([]); // cerrada: fuera de la lista pública
+    await emp.patch(`/api/positions/${p.id}`).send({ status: "OPEN" }).expect(200);
+    expect(await titles("q=ftsnuevo")).toEqual(["Ftsnuevo"]);
+
+    const inIndex = async () =>
+      Number((await prisma.$queryRawUnsafe<{ n: bigint }[]>(`SELECT count(*) AS n FROM PositionSearch WHERE PositionSearch MATCH '"ftsnuevo"'`))[0].n);
+    expect(await inIndex()).toBe(1);
+    await prisma.position.delete({ where: { id: p.id } }); // trigger de baja
+    expect(await inIndex()).toBe(0);
+  });
+
+  test("el plan usa la tabla FTS y no recorre Position", async () => {
+    const plan = await prisma.$queryRawUnsafe<{ detail: string }[]>(
+      `EXPLAIN QUERY PLAN SELECT p.id FROM Position p WHERE p.status = 'OPEN' AND p.id IN (SELECT rowid FROM PositionSearch WHERE PositionSearch MATCH 'searchLc : "react"') ORDER BY p.createdAt DESC, p.id DESC LIMIT 10`,
+    );
+    const text = plan.map((r) => r.detail).join("\n");
+    expect(text).toContain("VIRTUAL TABLE INDEX");
+    expect(text).not.toMatch(/SCAN (p|Position)\b/); // sí puede recorrer el índice, pero no la tabla
+  });
 });
