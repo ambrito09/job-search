@@ -1,0 +1,16 @@
+import type { Mode } from "@app/shared";
+
+export type Position = {
+  id: number;
+  title: string;
+  description: string;
+  location: string;
+  mode: Mode;
+  status: "OPEN" | "CLOSED";
+  createdAt: string;
+  company: { id: number; name: string };
+};
+
+export type PositionPage = { items: Position[]; total: number; limit: number; offset: number };
+
+export const modeLabels: Record<Mode, string> = { ONSITE: "Presencial", HYBRID: "Híbrido", REMOTE: "Remoto" };
