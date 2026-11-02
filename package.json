@@ -1,0 +1,13 @@
+{
+  "name": "job-board",
+  "private": true,
+  "workspaces": ["shared", "server", "client"],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

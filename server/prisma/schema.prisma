@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  COMPANY
+  CANDIDATE
+}
+
+enum Mode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum Status {
+  OPEN
+  CLOSED
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  passwordHash String
+  role         Role
+  name         String
+  createdAt    DateTime      @default(now())
+  positions    Position[]
+  applications Application[]
+}
+
+model Position {
+  id           Int           @id @default(autoincrement())
+  title        String
+  description  String
+  location     String
+  mode         Mode
+  status       Status        @default(OPEN)
+  companyId    Int
+  company      User          @relation(fields: [companyId], references: [id])
+  createdAt    DateTime      @default(now())
+  applications Application[]
+
+  @@index([status])
+  @@index([companyId])
+}
+
+model Application {
+  id          Int      @id @default(autoincrement())
+  positionId  Int
+  position    Position @relation(fields: [positionId], references: [id])
+  candidateId Int
+  candidate   User     @relation(fields: [candidateId], references: [id])
+  message     String?
+  createdAt   DateTime @default(now())
+
+  @@unique([positionId, candidateId])
+  @@index([candidateId])
+}
