@@ -4,9 +4,9 @@ export const roles = ["COMPANY", "CANDIDATE"] as const;
 export const modes = ["ONSITE", "HYBRID", "REMOTE"] as const;
 export const statuses = ["OPEN", "CLOSED"] as const;
 
-const email = z.string().trim().toLowerCase().email();
+const email = z.string().trim().toLowerCase().email("Correo inválido");
 const password = z.string().min(8, "Mínimo 8 caracteres");
-const text = (max: number) => z.string().trim().min(1).max(max);
+const text = (max: number) => z.string().trim().min(1, "Obligatorio").max(max, `Máximo ${max} caracteres`);
 
 export const registerSchema = z.object({
   email,
@@ -15,7 +15,7 @@ export const registerSchema = z.object({
   name: text(100),
 });
 
-export const loginSchema = z.object({ email, password: z.string().min(1) });
+export const loginSchema = z.object({ email, password: z.string().min(1, "Obligatoria") });
 
 export const positionCreateSchema = z.object({
   title: text(120),

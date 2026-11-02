@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider, type RouteObject } from "react-router-dom";
 import { Layout } from "@/components/Layout";
+import { LoginPage } from "@/pages/LoginPage";
+import { RegisterPage } from "@/pages/RegisterPage";
 
 // Las pantallas se añaden como hijas de Layout en T11 a T15.
 export const routes: RouteObject[] = [
@@ -8,6 +10,8 @@ export const routes: RouteObject[] = [
     element: <Layout />,
     children: [
       { path: "/", element: <h1 className="text-3xl font-bold">Encuentra tu rumbo profesional</h1> },
+      { path: "/login", element: <LoginPage /> },
+      { path: "/register", element: <RegisterPage /> },
       { path: "*", element: <p>Página no encontrada</p> },
     ],
   },
