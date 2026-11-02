@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { IconUserPlus } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { registerSchema, type RegisterInput } from "@app/shared";
@@ -36,7 +37,7 @@ export function RegisterPage() {
       <FormField label="Correo" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
       <FormField label="Contraseña" type="password" autoComplete="new-password" error={errors.password?.message} {...register("password")} />
       {signUp.error && <p role="alert" className="text-sm text-destructive">{signUp.error.message}</p>}
-      <Button type="submit" className="w-full" disabled={signUp.isPending}>Registrarme</Button>
+      <Button type="submit" className="w-full" disabled={signUp.isPending}><IconUserPlus className="size-4" aria-hidden />Registrarme</Button>
       <p className="text-sm text-muted-foreground">
         ¿Ya tienes cuenta? <Link to="/login" className="underline">Inicia sesión</Link>
       </p>

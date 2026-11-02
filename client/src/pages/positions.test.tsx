@@ -102,7 +102,7 @@ test("detalle: muestra la posición, avisa si está cerrada y maneja el 404", as
   renderAt("/positions/7");
   expect(await screen.findByRole("heading", { name: "Dev cerrada" })).toBeTruthy();
   expect(screen.getByText("Posición cerrada")).toBeTruthy();
-  expect(screen.getByText(/Acme · Bogotá · Remoto/)).toBeTruthy();
+  for (const t of ["Acme", "Bogotá", "Remoto"]) expect(screen.getByText(t)).toBeTruthy();
   cleanup();
   renderAt("/positions/99");
   expect((await screen.findByRole("alert")).textContent).toBe("No encontrado");

@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
+import { IconAlertCircle, IconChevronLeft, IconChevronRight, IconFilter, IconMoodEmpty, IconRefresh } from "@tabler/icons-react";
 import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { modes } from "@app/shared";
 import { FormField } from "@/components/FormField";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { PositionMeta } from "@/components/PositionMeta";
 import { modeLabels, type PositionPage } from "@/lib/types";
 
 // Todo el estado de la lista (q, location, mode, limit, offset) vive en la URL: copiarla reproduce la vista.
@@ -41,18 +43,18 @@ export function PositionsPage() {
           <option value="">Todas</option>
           {modes.map((m) => <option key={m} value={m}>{modeLabels[m]}</option>)}
         </FormField>
-        <Button type="submit">Filtrar</Button>
+        <Button type="submit"><IconFilter className="size-4" aria-hidden />Filtrar</Button>
       </form>
 
       {isPending ? (
         <p role="status">Cargando posiciones…</p>
       ) : error ? (
         <div role="alert" className="space-y-2">
-          <p className="text-destructive">{error.message}</p>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>Reintentar</Button>
+          <p className="inline-flex items-center gap-2 text-destructive"><IconAlertCircle className="size-5" aria-hidden />{error.message}</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}><IconRefresh className="size-4" aria-hidden />Reintentar</Button>
         </div>
       ) : data.items.length === 0 ? (
-        <p>No hay posiciones que coincidan con los filtros.</p>
+        <p className="inline-flex items-center gap-2 text-muted-foreground"><IconMoodEmpty className="size-5" aria-hidden />No hay posiciones que coincidan con los filtros.</p>
       ) : (
         <>
           <ul className="divide-y divide-border rounded-md border border-border">
@@ -60,22 +62,20 @@ export function PositionsPage() {
               <li key={p.id}>
                 <Link to={`/positions/${p.id}`} state={{ list: `/positions${search && `?${search}`}` }} className="block space-y-1 px-4 py-3 hover:bg-muted">
                   <span className="font-medium">{p.title}</span>
-                  <span className="block text-sm text-muted-foreground">
-                    {p.company.name} · {p.location} · {modeLabels[p.mode]}
-                  </span>
+                  <PositionMeta p={p} />
                 </Link>
               </li>
             ))}
           </ul>
           <nav aria-label="Paginación" className="flex items-center gap-3">
             <Button variant="outline" size="sm" disabled={data.offset === 0} onClick={() => goTo(Math.max(0, data.offset - data.limit))}>
-              Anterior
+              <IconChevronLeft className="size-4" aria-hidden />Anterior
             </Button>
             <span className="text-sm text-muted-foreground">
               {data.offset + 1}–{data.offset + data.items.length} de {data.total}
             </span>
             <Button variant="outline" size="sm" disabled={data.offset + data.items.length >= data.total} onClick={() => goTo(data.offset + data.limit)}>
-              Siguiente
+              Siguiente<IconChevronRight className="size-4" aria-hidden />
             </Button>
           </nav>
         </>

@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { IconLogin } from "@tabler/icons-react";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { loginSchema, type LoginInput } from "@app/shared";
@@ -29,7 +30,7 @@ export function LoginPage() {
       <FormField label="Correo" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
       <FormField label="Contraseña" type="password" autoComplete="current-password" error={errors.password?.message} {...register("password")} />
       {login.error && <p role="alert" className="text-sm text-destructive">{login.error.message}</p>}
-      <Button type="submit" className="w-full" disabled={login.isPending}>Entrar</Button>
+      <Button type="submit" className="w-full" disabled={login.isPending}><IconLogin className="size-4" aria-hidden />Entrar</Button>
       <p className="text-sm text-muted-foreground">
         ¿No tienes cuenta? <Link to="/register" className="underline">Regístrate</Link>
       </p>
