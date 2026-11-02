@@ -4,6 +4,7 @@ import cors from "cors";
 import { rateLimit } from "express-rate-limit";
 import type { PrismaClient } from "@prisma/client";
 import { authRouter } from "./auth";
+import { applicationsRouter } from "./applications";
 import { positionsRouter } from "./positions";
 
 export function createApp(opts: {
@@ -21,6 +22,7 @@ export function createApp(opts: {
   app.use("/api/auth", rateLimit({ windowMs: 15 * 60_000, limit: opts.authRateLimit ?? 20, standardHeaders: true, legacyHeaders: false, message: { error: "Demasiados intentos, inténtalo más tarde" } }));
   app.use("/api", authRouter(opts.prisma, opts.jwtSecret, opts.secureCookies ?? false));
   app.use("/api", positionsRouter(opts.prisma, opts.jwtSecret));
+  app.use("/api", applicationsRouter(opts.prisma, opts.jwtSecret));
 
   app.use("/api", (_req, res) => void res.status(404).json({ error: "No encontrado" }));
   const onError: ErrorRequestHandler = (err, _req, res, _next) => {
