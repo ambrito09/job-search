@@ -68,3 +68,24 @@ test("con staticDir sirve el cliente, hace fallback a index.html y no pisa /api"
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("estáticos: /assets cacheable un año, index.html se revalida, comprime y un archivo inexistente es 404", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "static2-"));
+  mkdirSync(join(dir, "assets"));
+  writeFileSync(join(dir, "index.html"), "<html>cliente</html>");
+  writeFileSync(join(dir, "assets", "app-abc123.js"), "console.log('x');".repeat(2000)); // >1 KB: se comprime
+  try {
+    const app = createApp({ prisma: new PrismaClient(), jwtSecret: "t", staticDir: dir });
+    const js = await request(app).get("/assets/app-abc123.js").set("Accept-Encoding", "gzip");
+    expect(js.headers["content-encoding"]).toBe("gzip");
+    expect(js.headers["cache-control"]).toBe("public, max-age=31536000, immutable");
+    expect(js.text.length).toBe(34000); // el cliente lo recibe descomprimido
+    expect((await request(app).get("/")).headers["cache-control"]).toBe("no-cache");
+    expect((await request(app).get("/positions/7")).headers["cache-control"]).toBe("no-cache");
+    const missing = await request(app).get("/assets/app-viejo.js"); // p. ej. un trozo de un despliegue anterior
+    expect(missing.status).toBe(404);
+    expect(missing.text).not.toContain("cliente");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

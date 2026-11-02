@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { Monogram } from "@/components/Monogram";
 import { PositionMeta } from "@/components/PositionMeta";
-import type { Position } from "@/lib/types";
+import type { PositionSummary } from "@/lib/types";
 
 // Fila de posición: monograma de la empresa, título y datos. `list` es la URL a la que "Volver" regresa desde el detalle.
-export function PositionRow({ p, list }: { p: Position; list: string }) {
+export function PositionRow({ p, list }: { p: PositionSummary; list: string }) {
   return (
     <Link
       to={`/positions/${p.id}`}

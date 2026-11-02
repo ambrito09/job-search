@@ -28,6 +28,9 @@ export type Applicant = {
   candidate: { id: number; name: string; email: string };
 };
 
-export type PositionPage = { items: Position[]; total: number; limit: number; offset: number };
+// La lista no trae la descripción (solo el detalle): menos bytes por fila.
+export type PositionSummary = Omit<Position, "description">;
+
+export type PositionPage = { items: PositionSummary[]; total: number; limit: number; offset: number };
 
 export const modeLabels: Record<Mode, string> = { ONSITE: "Presencial", HYBRID: "Híbrido", REMOTE: "Remoto" };

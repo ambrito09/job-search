@@ -1,5 +1,6 @@
 import path from "node:path";
 import express, { type ErrorRequestHandler } from "express";
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { rateLimit } from "express-rate-limit";
@@ -17,6 +18,7 @@ export function createApp(opts: {
   staticDir?: string; // build del cliente: se sirve en / con fallback a index.html (rutas de React Router)
 }) {
   const app = express();
+  app.use(compression()); // JSON y estáticos van comprimidos (el JS del cliente baja ~70 %)
   if (opts.corsOrigin) app.use("/api", cors({ origin: opts.corsOrigin, credentials: true }));
   app.use(express.json(), cookieParser());
   app.get("/api/health", (_req, res) => void res.json({ ok: true }));
@@ -29,9 +31,17 @@ export function createApp(opts: {
   app.use("/api", (_req, res) => void res.status(404).json({ error: "No encontrado" }));
   if (opts.staticDir) {
     const dir = opts.staticDir;
-    app.use(express.static(dir));
-    // Cualquier otro GET fuera de /api es una ruta del cliente.
-    app.get(/^(?!\/api(\/|$)).*/, (_req, res) => void res.sendFile(path.join(dir, "index.html")));
+    // Los archivos de /assets llevan hash en el nombre: nunca cambian, se cachean un año. El resto (index.html) se revalida.
+    app.use(express.static(dir, {
+      setHeaders: (res, file) =>
+        res.setHeader("Cache-Control", path.relative(dir, file).startsWith("assets") ? "public, max-age=31536000, immutable" : "no-cache"),
+    }));
+    // Un GET fuera de /api sin extensión es una ruta del cliente. Con extensión (p. ej. un JS antiguo que ya no existe) es un 404 real:
+    // devolver index.html con 200 haría fallar el script con "Unexpected token <".
+    app.get(/^(?!\/api(\/|$))[^.]*$/, (_req, res) => {
+      res.setHeader("Cache-Control", "no-cache");
+      res.sendFile(path.join(dir, "index.html"));
+    });
   }
   const onError: ErrorRequestHandler = (err, _req, res, _next) => {
     // JSON mal formado llega con status 400; el resto es un fallo interno que no se detalla al cliente.

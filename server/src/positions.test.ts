@@ -151,3 +151,11 @@ test("mis posiciones devuelve como máximo las 20 más recientes", async () => {
   expect(res.body[0].title).toBe("Masiva 20"); // la más reciente primero
   expect(res.body.some((x: any) => x.title === "Masiva 0")).toBe(false);
 }, 30_000);
+
+test("la lista no incluye la descripción pero el detalle sí", async () => {
+  const list = (await request(app).get("/api/positions?limit=1")).body.items[0];
+  expect(Object.keys(list)).not.toContain("description");
+  expect(list.title).toBeTruthy();
+  const detail = (await request(app).get(`/api/positions/${list.id}`)).body;
+  expect(detail.description).toBeTruthy();
+});

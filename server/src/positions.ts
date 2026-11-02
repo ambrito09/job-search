@@ -29,7 +29,8 @@ export function positionsRouter(prisma: PrismaClient, secret: string) {
     // LIMIT/OFFSET en SQLite: solo se leen las filas de la página.
     const [items, total] = await Promise.all([
       prisma.position.findMany({
-        where, include, omit,
+        where, include,
+        omit: { ...omit, description: true }, // la lista no la muestra: ahorra hasta 5.000 caracteres por fila
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: limit,
         skip: offset,

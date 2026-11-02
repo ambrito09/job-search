@@ -1,7 +1,7 @@
 import { IconArrowsExchange, IconBuilding, IconHome, IconMapPin } from "@tabler/icons-react";
 import type { Mode } from "@app/shared";
 import { cn } from "@/lib/utils";
-import { modeLabels, type Position } from "@/lib/types";
+import { modeLabels, type PositionSummary } from "@/lib/types";
 
 const modeStyles = {
   REMOTE: { icon: IconHome, chip: "bg-teal-soft text-teal" },
@@ -10,7 +10,7 @@ const modeStyles = {
 } satisfies Record<Mode, { icon: unknown; chip: string }>;
 
 // Ubicación y modalidad (chip de color) con iconos decorativos; el texto ya lo dice todo.
-export function PositionMeta({ p, withCompany = false }: { p: Position; withCompany?: boolean }) {
+export function PositionMeta({ p, withCompany = false }: { p: PositionSummary; withCompany?: boolean }) {
   const { icon: ModeIcon, chip } = modeStyles[p.mode];
   return (
     <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
