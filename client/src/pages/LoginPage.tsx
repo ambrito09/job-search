@@ -8,7 +8,7 @@ import { AuthShell } from "@/components/AuthShell";
 import { FormField } from "@/components/FormField";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { useMe, type User } from "@/lib/session";
+import { resetSession, useMe, type User } from "@/lib/session";
 
 export function LoginPage() {
   const { data: me } = useMe();
@@ -19,7 +19,7 @@ export function LoginPage() {
   const login = useMutation({
     mutationFn: (v: LoginInput) => api<User>("/auth/login", { method: "POST", json: v }),
     onSuccess: (user) => {
-      qc.setQueryData(["me"], user);
+      resetSession(qc, user);
       navigate(from, { replace: true });
     },
   });

@@ -9,7 +9,7 @@ import type { MyPosition } from "@/lib/types";
 export function MyPositionsPage() {
   const { data, error, isPending } = useQuery({
     queryKey: ["myPositions"],
-    queryFn: () => api<MyPosition[]>("/me/positions"),
+    queryFn: ({ signal }) => api<MyPosition[]>("/me/positions", { signal }),
     retry: false,
   });
 

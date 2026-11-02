@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { IconAlertCircle, IconChevronLeft, IconChevronRight, IconFilter, IconMoodEmpty, IconRefresh } from "@tabler/icons-react";
 import type { FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -6,6 +6,7 @@ import { modes } from "@app/shared";
 import { FormField } from "@/components/FormField";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { PositionRow } from "@/components/PositionRow";
 import { modeLabels, type PositionPage } from "@/lib/types";
 
@@ -13,10 +14,11 @@ import { modeLabels, type PositionPage } from "@/lib/types";
 export function PositionsPage() {
   const [params, setParams] = useSearchParams();
   const search = params.toString();
-  const { data, error, isPending, refetch } = useQuery({
+  const { data, error, isPending, isPlaceholderData, refetch } = useQuery({
     queryKey: ["positions", search],
-    queryFn: () => api<PositionPage>(`/positions?${search}`),
+    queryFn: ({ signal }) => api<PositionPage>(`/positions?${search}`, { signal }),
     retry: false,
+    placeholderData: keepPreviousData, // al paginar o filtrar se ve la lista anterior (atenuada) en vez de un "Cargando…" que salta
   });
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -57,19 +59,19 @@ export function PositionsPage() {
         <p className="inline-flex items-center gap-2 text-muted-foreground"><IconMoodEmpty className="size-5" aria-hidden />No hay posiciones que coincidan con los filtros.</p>
       ) : (
         <>
-          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border">
+          <ul className={cn("divide-y divide-border overflow-hidden rounded-2xl border border-border transition-opacity", isPlaceholderData && "opacity-60")}>
             {data.items.map((p) => (
               <li key={p.id}><PositionRow p={p} list={`/positions${search && `?${search}`}`} /></li>
             ))}
           </ul>
           <nav aria-label="Paginación" className="flex items-center gap-3">
-            <Button variant="outline" size="sm" disabled={data.offset === 0} onClick={() => goTo(Math.max(0, data.offset - data.limit))}>
+            <Button variant="outline" size="sm" disabled={data.offset === 0 || isPlaceholderData} onClick={() => goTo(Math.max(0, data.offset - data.limit))}>
               <IconChevronLeft className="size-4" aria-hidden />Anterior
             </Button>
             <span className="text-sm text-muted-foreground">
               {data.offset + 1}–{data.offset + data.items.length} de {data.total}
             </span>
-            <Button variant="outline" size="sm" disabled={data.offset + data.items.length >= data.total} onClick={() => goTo(data.offset + data.limit)}>
+            <Button variant="outline" size="sm" disabled={data.offset + data.items.length >= data.total || isPlaceholderData} onClick={() => goTo(data.offset + data.limit)}>
               Siguiente<IconChevronRight className="size-4" aria-hidden />
             </Button>
           </nav>

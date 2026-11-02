@@ -17,7 +17,7 @@ const stats = [
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const recent = useQuery({ queryKey: ["positions", "recent"], queryFn: () => api<PositionPage>("/positions?limit=4"), retry: false });
+  const recent = useQuery({ queryKey: ["positions", "recent"], queryFn: ({ signal }) => api<PositionPage>("/positions?limit=4", { signal }), retry: false });
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const q = String(new FormData(e.currentTarget).get("q") ?? "").trim();

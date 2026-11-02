@@ -18,7 +18,7 @@ export function PositionDetailPage() {
   const { data: me } = useMe();
   const { data: p, error, isPending } = useQuery({
     queryKey: ["position", id],
-    queryFn: () => api<Position>(`/positions/${id}`),
+    queryFn: ({ signal }) => api<Position>(`/positions/${id}`, { signal }),
     retry: false,
   });
   const [confirming, setConfirming] = useState(false);

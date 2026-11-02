@@ -8,7 +8,7 @@ import { AuthShell } from "@/components/AuthShell";
 import { FormField } from "@/components/FormField";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { useMe, type User } from "@/lib/session";
+import { resetSession, useMe, type User } from "@/lib/session";
 
 export function RegisterPage() {
   const { data: me } = useMe();
@@ -21,7 +21,7 @@ export function RegisterPage() {
   const signUp = useMutation({
     mutationFn: (v: RegisterInput) => api<User>("/auth/register", { method: "POST", json: v }),
     onSuccess: (user) => {
-      qc.setQueryData(["me"], user);
+      resetSession(qc, user);
       navigate("/", { replace: true });
     },
   });

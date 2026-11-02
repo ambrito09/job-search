@@ -5,4 +5,5 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   resolve: { alias: { "@": path.resolve(import.meta.dirname, "client/src") } },
   esbuild: { jsx: "automatic" },
+  test: { setupFiles: ["./client/src/test-setup.ts"] },
 });

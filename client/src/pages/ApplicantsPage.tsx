@@ -6,10 +6,10 @@ import type { Applicant, Position } from "@/lib/types";
 
 export function ApplicantsPage() {
   const { id } = useParams();
-  const position = useQuery({ queryKey: ["position", id], queryFn: () => api<Position>(`/positions/${id}`), retry: false });
+  const position = useQuery({ queryKey: ["position", id], queryFn: ({ signal }) => api<Position>(`/positions/${id}`, { signal }), retry: false });
   const { data, error, isPending } = useQuery({
     queryKey: ["applicants", id],
-    queryFn: () => api<Applicant[]>(`/positions/${id}/applications`),
+    queryFn: ({ signal }) => api<Applicant[]>(`/positions/${id}/applications`, { signal }),
     retry: false,
   });
 

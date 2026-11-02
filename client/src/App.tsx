@@ -1,18 +1,22 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { lazy, type ComponentType } from "react";
 import { createBrowserRouter, RouterProvider, type RouteObject } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { RequireAuth } from "@/components/RequireAuth";
-import { ApplicantsPage } from "@/pages/ApplicantsPage";
-import { MyApplicationsPage } from "@/pages/MyApplicationsPage";
-import { MyPositionsPage } from "@/pages/MyPositionsPage";
-import { NewPositionPage } from "@/pages/NewPositionPage";
 import { LandingPage } from "@/pages/LandingPage";
-import { LoginPage } from "@/pages/LoginPage";
-import { PositionDetailPage } from "@/pages/PositionDetailPage";
-import { PositionsPage } from "@/pages/PositionsPage";
-import { RegisterPage } from "@/pages/RegisterPage";
 
-// Las pantallas se añaden como hijas de Layout en T11 a T15.
+// Cada pantalla, salvo la landing (la entrada más común), va en su propio trozo y se descarga al visitarla.
+const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) =>
+  lazy(() => load().then((m) => ({ default: m[name] })));
+const ApplicantsPage = page(() => import("@/pages/ApplicantsPage"), "ApplicantsPage");
+const LoginPage = page(() => import("@/pages/LoginPage"), "LoginPage");
+const MyApplicationsPage = page(() => import("@/pages/MyApplicationsPage"), "MyApplicationsPage");
+const MyPositionsPage = page(() => import("@/pages/MyPositionsPage"), "MyPositionsPage");
+const NewPositionPage = page(() => import("@/pages/NewPositionPage"), "NewPositionPage");
+const PositionDetailPage = page(() => import("@/pages/PositionDetailPage"), "PositionDetailPage");
+const PositionsPage = page(() => import("@/pages/PositionsPage"), "PositionsPage");
+const RegisterPage = page(() => import("@/pages/RegisterPage"), "RegisterPage");
+
 export const routes: RouteObject[] = [
   {
     element: <Layout />,
@@ -31,7 +35,9 @@ export const routes: RouteObject[] = [
   },
 ];
 
-const queryClient = new QueryClient();
+// 60 s sin repetir peticiones a los mismos datos, y sin refetch solo por volver a enfocar la pestaña.
+// Lo que cambia por una acción del usuario se invalida explícitamente (crear, cerrar, aplicar).
+const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 60_000, refetchOnWindowFocus: false } } });
 const router = createBrowserRouter(routes);
 
 export default function App() {

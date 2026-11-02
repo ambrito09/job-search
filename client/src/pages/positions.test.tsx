@@ -120,3 +120,45 @@ test("volver desde el detalle restaura los filtros y la página de la lista; un 
   await userEvent.click(await screen.findByRole("link", { name: /Volver/ }));
   expect(url()).toBe("/positions");
 });
+
+test("al cambiar de filtros se cancela la petición anterior (signal)", async () => {
+  const signals: AbortSignal[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string, init?: RequestInit) => {
+      if (url === "/api/me") return Promise.resolve(new Response(JSON.stringify({ error: "x" }), { status: 401 }));
+      signals.push(init!.signal!);
+      // La primera petición no responde nunca; la segunda (con el filtro nuevo) sí.
+      return url.includes("q=nuevo") ? Promise.resolve(new Response(JSON.stringify(page([pos(1, "Dev")])), { status: 200 })) : new Promise<Response>(() => {});
+    }),
+  );
+  renderAt("/positions");
+  await userEvent.type(await screen.findByLabelText("Buscar"), "nuevo");
+  await userEvent.click(screen.getByRole("button", { name: "Filtrar" }));
+  await screen.findByText("Dev");
+  expect(signals[0].aborted).toBe(true);
+  expect(signals[1].aborted).toBe(false);
+});
+
+test("al paginar se mantiene la lista anterior (atenuada y sin poder pulsar) hasta que llega la siguiente", async () => {
+  let release!: () => void;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string) => {
+      if (url === "/api/me") return Promise.resolve(new Response(JSON.stringify({ error: "x" }), { status: 401 }));
+      const offset = Number(new URL(url, "http://x").searchParams.get("offset") ?? 0);
+      const res = () => new Response(JSON.stringify(page([pos(offset + 1, `Pos ${offset + 1}`)], { total: 2, limit: 1, offset })), { status: 200 });
+      // La página 2 se retiene hasta que el test la libera.
+      return offset === 0 ? Promise.resolve(res()) : new Promise<Response>((ok) => (release = () => ok(res())));
+    }),
+  );
+  renderAt("/positions?limit=1");
+  await screen.findByText("Pos 1");
+  await userEvent.click(screen.getByRole("button", { name: "Siguiente" }));
+  await screen.findByText("Pos 1"); // sigue visible mientras carga la 2
+  expect(screen.queryByText(/Cargando/)).toBeNull();
+  expect((screen.getByRole("button", { name: "Siguiente" }) as HTMLButtonElement).disabled).toBe(true);
+  release();
+  expect(await screen.findByText("Pos 2")).toBeTruthy();
+  expect(screen.queryByText("Pos 1")).toBeNull();
+});

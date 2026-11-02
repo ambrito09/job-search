@@ -18,7 +18,7 @@ export function ApplyBox({ position }: { position: Position }) {
   const isCandidate = me?.role === "CANDIDATE";
   const mine = useQuery({
     queryKey: ["myApplications"],
-    queryFn: () => api<MyApplication[]>("/me/applications"),
+    queryFn: ({ signal }) => api<MyApplication[]>("/me/applications", { signal }),
     enabled: isCandidate,
   });
   const { register, handleSubmit, formState: { errors } } = useForm<ApplyInput>({ resolver: zodResolver(applySchema) });

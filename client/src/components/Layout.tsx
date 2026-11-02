@@ -1,19 +1,22 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { IconBriefcase, IconCompass, IconFileText, IconLayoutList, IconLogin, IconLogout, IconPlus, IconUserPlus } from "@tabler/icons-react";
+import { Suspense } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
+import { ChunkErrorBoundary } from "@/components/ChunkErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { useMe } from "@/lib/session";
+import { resetSession, useMe } from "@/lib/session";
 
 const navLink = "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-foreground/80 transition-colors hover:bg-primary-soft hover:text-primary";
 
 export function Layout() {
   const { data: user, isPending } = useMe();
   const qc = useQueryClient();
-  const home = useLocation().pathname === "/"; // la landing ocupa todo el ancho; el resto va en columna centrada
+  const { pathname } = useLocation();
+  const home = pathname === "/"; // la landing ocupa todo el ancho; el resto va en columna centrada
   const logout = useMutation({
     mutationFn: () => api("/auth/logout", { method: "POST" }),
-    onSuccess: () => qc.setQueryData(["me"], null),
+    onSuccess: () => resetSession(qc, null),
   });
 
   return (
@@ -49,7 +52,12 @@ export function Layout() {
         </nav>
       </header>
       <main className={home ? "flex-1" : "mx-auto w-full max-w-5xl flex-1 px-4 py-10"}>
-        <Outlet />
+        {/* key: al cambiar de ruta se limpia un posible error de carga del trozo anterior */}
+        <ChunkErrorBoundary key={pathname}>
+          <Suspense fallback={<p role="status">Cargando…</p>}>
+            <Outlet />
+          </Suspense>
+        </ChunkErrorBoundary>
       </main>
       <footer className="bg-ink text-primary-soft">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-4 py-6 text-sm">

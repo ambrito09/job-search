@@ -8,7 +8,7 @@ import type { MyApplication } from "@/lib/types";
 export function MyApplicationsPage() {
   const { data, error, isPending } = useQuery({
     queryKey: ["myApplications"],
-    queryFn: () => api<MyApplication[]>("/me/applications"),
+    queryFn: ({ signal }) => api<MyApplication[]>("/me/applications", { signal }),
     retry: false,
   });
 
