@@ -1,3 +1,6 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import express from "express";
 import request from "supertest";
 import { expect, test } from "vitest";
@@ -45,4 +48,23 @@ test("CORS solo se activa con corsOrigin y permite credenciales", async () => {
   expect(on.headers["access-control-allow-credentials"]).toBe("true");
   const off = await request(createApp({ prisma: new PrismaClient(), jwtSecret: "t" })).get("/api/health").set("Origin", origin);
   expect(off.headers["access-control-allow-origin"]).toBeUndefined();
+});
+
+test("con staticDir sirve el cliente, hace fallback a index.html y no pisa /api", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "static-"));
+  mkdirSync(join(dir, "assets"));
+  writeFileSync(join(dir, "index.html"), "<html>cliente</html>");
+  writeFileSync(join(dir, "assets", "a.js"), "console.log(1)");
+  try {
+    const app = createApp({ prisma: new PrismaClient(), jwtSecret: "t", staticDir: dir });
+    expect((await request(app).get("/")).text).toContain("cliente");
+    expect((await request(app).get("/positions/7?q=x")).text).toContain("cliente"); // ruta de React Router
+    expect((await request(app).get("/assets/a.js")).text).toBe("console.log(1)");
+    const api404 = await request(app).get("/api/nope");
+    expect([api404.status, api404.body]).toEqual([404, { error: "No encontrado" }]);
+    expect((await request(app).get("/api/health")).body).toEqual({ ok: true });
+    expect((await request(app).post("/positions")).status).toBe(404); // el fallback es solo GET
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

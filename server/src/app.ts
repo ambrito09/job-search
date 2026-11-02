@@ -1,3 +1,4 @@
+import path from "node:path";
 import express, { type ErrorRequestHandler } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -13,6 +14,7 @@ export function createApp(opts: {
   secureCookies?: boolean;
   corsOrigin?: string; // solo hace falta si el cliente se sirve desde otro origen (p. ej. Vite en desarrollo)
   authRateLimit?: number; // intentos de registro/login por IP cada 15 min
+  staticDir?: string; // build del cliente: se sirve en / con fallback a index.html (rutas de React Router)
 }) {
   const app = express();
   if (opts.corsOrigin) app.use("/api", cors({ origin: opts.corsOrigin, credentials: true }));
@@ -25,6 +27,12 @@ export function createApp(opts: {
   app.use("/api", applicationsRouter(opts.prisma, opts.jwtSecret));
 
   app.use("/api", (_req, res) => void res.status(404).json({ error: "No encontrado" }));
+  if (opts.staticDir) {
+    const dir = opts.staticDir;
+    app.use(express.static(dir));
+    // Cualquier otro GET fuera de /api es una ruta del cliente.
+    app.get(/^(?!\/api(\/|$)).*/, (_req, res) => void res.sendFile(path.join(dir, "index.html")));
+  }
   const onError: ErrorRequestHandler = (err, _req, res, _next) => {
     // JSON mal formado llega con status 400; el resto es un fallo interno que no se detalla al cliente.
     const status = err.status === 400 ? 400 : 500;
