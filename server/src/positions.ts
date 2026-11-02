@@ -52,7 +52,7 @@ export function positionsRouter(prisma: PrismaClient, secret: string) {
         include: { ...include, _count: { select: { applications: true } } },
         omit,
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: 100, // shortcut: sin paginación, tope fijo; paginar si una empresa publica cientos.
+        take: 20, // shortcut: sin paginación, tope fijo de 20 (las más recientes); paginar si una empresa publica más.
       }),
     );
   });

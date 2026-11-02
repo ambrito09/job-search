@@ -142,3 +142,12 @@ test("mis posiciones: solo la empresa, solo las suyas (abiertas y cerradas) con 
   expect(Object.keys(mine)).not.toContain("searchLc");
   expect(res.body.some((x: any) => x.status === "OPEN")).toBe(true); // las cerradas no desplazan a las abiertas
 });
+
+test("mis posiciones devuelve como máximo las 20 más recientes", async () => {
+  const emp = await login("empresa2@demo.com");
+  for (let i = 0; i < 21; i++) await emp.post("/api/positions").send({ ...newPos, title: `Masiva ${i}` }).expect(201);
+  const res = await emp.get("/api/me/positions");
+  expect(res.body).toHaveLength(20);
+  expect(res.body[0].title).toBe("Masiva 20"); // la más reciente primero
+  expect(res.body.some((x: any) => x.title === "Masiva 0")).toBe(false);
+}, 30_000);
