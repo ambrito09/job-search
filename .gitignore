@@ -157,3 +157,6 @@ docs/
 # Playwright
 test-results/
 playwright-report/
+
+# Datos locales (base SQLite y secreto JWT)
+data/
