@@ -29,3 +29,20 @@ test("validate rechaza cuerpo inválido y acepta el válido", async () => {
   expect((await request(app).post("/x").send({ a: 1 })).status).toBe(400);
   expect((await request(app).post("/x").send({ a: "ok" })).body).toEqual({ a: "ok" });
 });
+
+test("rate limit en /api/auth devuelve 429 { error } al pasar el límite", async () => {
+  const app = createApp({ prisma: new PrismaClient(), jwtSecret: "t", authRateLimit: 2 });
+  const codes = [];
+  for (let i = 0; i < 3; i++) codes.push((await request(app).post("/api/auth/login").send({})).status);
+  expect(codes).toEqual([400, 400, 429]);
+  expect((await request(app).get("/api/health")).status).toBe(200);
+});
+
+test("CORS solo se activa con corsOrigin y permite credenciales", async () => {
+  const origin = "http://localhost:5173";
+  const on = await request(createApp({ prisma: new PrismaClient(), jwtSecret: "t", corsOrigin: origin })).get("/api/health").set("Origin", origin);
+  expect(on.headers["access-control-allow-origin"]).toBe(origin);
+  expect(on.headers["access-control-allow-credentials"]).toBe("true");
+  const off = await request(createApp({ prisma: new PrismaClient(), jwtSecret: "t" })).get("/api/health").set("Origin", origin);
+  expect(off.headers["access-control-allow-origin"]).toBeUndefined();
+});
